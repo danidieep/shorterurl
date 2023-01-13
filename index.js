@@ -40,41 +40,51 @@ app.get('/api/hello', function(req, res) {
   res.json({ greeting: 'hello API' });
 });
 
+app.get('/api/shorturl/:input', (req, res) =>{
+  let input = req.params.input
+  Url.findOne({short: input}, (err, urlFound) =>{
+    if(!err && urlFound != undefined){
+      console.log(urlFound)
+      res.redirect(urlFound.original_url)
+    } 
+  })
+})
 
 
 app.post('/api/shorturl', urlencoded({extended:false}), (req, res) =>{
   let url = req.body.url
-  let lastShort = 1
   let obj = {}
+  let lastShort = 1
   obj.original_url = url
-  let urlRegex = new RegExp(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/)
-  if(!url.match(urlRegex)){
-    return res.json({error : "invalid url"})
+  let urlRegex = new RegExp(/https?:\//)
+
+  try {
+      if(!obj.original_url.match(urlRegex)){
+     res.json({error : "invalid url"})
+     return
   }
-  Url.findOne({}).sort({short:'desc'}).exec((e, data)=>{
-    if(!e && data != undefined){
-      lastShort = data.short+1
-    }
-    if(!e){
-      Url.findOneAndUpdate({original_url:url}, {original_url: url, short: lastShort}, {new: true, upsert: true},
-        (err, savedUrl) =>{
-          if(!err){
-            obj.short = savedUrl.short
-            res.json(obj)
-
-          }
-        })
-    }
-  })
+    Url.findOne({}).sort({short:'desc'}).exec((e, data)=>{
+      if(!e && data != undefined){
+        lastShort = data.short+1
+      }
+      if(!e){
+        Url.findOneAndUpdate({original_url:url}, {original_url: url, short: lastShort}, {new: true, upsert: true},
+          (err, savedUrl) =>{
+            if(!err){
+              console.log(savedUrl)
+              res.json({original_url: url, short_url: savedUrl.short})
+            }
+          })
+      }
+    })
+  } catch (error) {
+    res.send(error)
+  }
+    
+  
 })
 
-app.get('/api/shorturl/:shortUrl', (req, res) =>{
-  let {shortUrl} = req.params
-  Url.findOne({short: shortUrl}, (err, urlFound) =>{
-    if(err) res.json({error: "URL not found"})
-    res.redirect(urlFound.original_url)
-  })
-})
+
 
 app.listen(port, function() {
   console.log(`Listening on port ${port}`);
