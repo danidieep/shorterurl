@@ -4,7 +4,7 @@ const cors = require('cors');
 const { default: mongoose } = require('mongoose');
 const { urlencoded } = require('body-parser');
 const app = express();
-const {MONGO_URI} = process.env
+const MONGO_URI='mongodb+srv://daniAdmin:YJnkgxhbtE99bSJr@cluster0.yenpvps.mongodb.net/shortener-url?retryWrites=true&w=majority'
 mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
 const urlSchema = new mongoose.Schema({
